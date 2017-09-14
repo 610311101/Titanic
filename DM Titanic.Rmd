@@ -1,0 +1,104 @@
+---
+title: "Data Mining: Titanic"
+output: html_notebook
+---
+
+
+```{r, message=FALSE, warning=FALSE}
+library("caret");
+library("ggplot2");
+library("magrittr");
+library("plot3D");
+library("dplyr");
+```
+```{r}
+set.seed(1);
+df          <- read.csv("train.csv");
+df$Survived <- as.factor(df$Survived);
+intrain <- createDataPartition(
+  y = df$Survived,  ##  0 is dead, 1 is survived.
+  p = 0.75,
+  list = FALSE
+);
+train <- df[intrain,];
+str(train)
+```
+In Titanic data, is classification problem,
+Y is "Survived", 0 means dead, 1 means life,
+dimension of variable X is 11.
+
+-----------
+### In "Pclass" and "Survived"  
+ 1. Rate of dead is higher if Ticket class of people is 3.  
+ 2. Rate of dead is half if Ticket class of people is 2.  
+ 3. Rate of survived is higher if Ticket class of people is 1.
+
+I guess Ticket class 1 is VIP.
+```{r, echo=FALSE}
+z <- table( "Pclass" = train$Pclass, "Survived" =train$Survived );
+par(mfrow = c(1,2))
+hist3D(z=z, border="black", xlab = "Pclass", ylab = "Survived", zlab = "counts")
+image2D(z=z, border="black", xlab = "Pclass", ylab = "Survived", axes=F)
+axis(2, at = c(0,1), label = c("0","1"))
+axis(1, at = c(0,0.5,1), label = c("1","2","3"))
+mtext("Pclass vs Survived", side = 3, line = -21, outer = TRUE)
+apply(z, 2, function(x) x/rowSums(z))
+```
+### In "Sex" and "Survived"  
+ 1. Rate of dead is higher if male.  
+ 2. Rate of survived is higher if female.
+
+Gentlemen.
+```{r, echo=FALSE}
+z <- table( "Sex" = train$Sex, "Survived" = train$Survived )
+par(mfrow = c(1,2))
+hist3D(z=z, border="black", xlab = "Sex", ylab = "Survived", zlab = "counts")
+image2D(z=z, border="black", xlab = "Sex", ylab = "Survived", axes=F)
+axis(2, at = c(0,1), label = c("0","1"))
+axis(1, at = c(0,1), label = c("female","male"))
+mtext("Sex vs Survived", side = 3, line = -21, outer = TRUE)
+apply(z, 2, function(x) x/rowSums(z))
+
+
+```
+### In "Age" and "Survived"  
+ 1. There are missing data in "Age".  
+ 2. I found the rate of dead is
+    lower if age less than 10 only.
+```{r, echo=FALSE}
+age <- rbind(
+  train[!is.na(train$Age),] %>% select(Age, Survived) %>% filter(Survived==0),
+  train[!is.na(train$Age),] %>% select(Age, Survived) %>% filter(Survived==1)
+)
+
+ggplot(age, aes(x = Age, color=Survived)) +
+  geom_density()
+```
+### In "SibSp" and "Survived"
+"SibSp" means brothers and sisters.  
+ 1. 465 people not have brothers and sisters.  
+ 2. 6 people have 8 "SibSp".  
+ 
+```{r, echo=FALSE}
+table(train$SibSp, dnn = "SibSp")
+```
+ 3. "SibSp" over 5 almost dead.
+ 4. Rate of dead < 50% if have 2 "SibSp".
+```{r, echo=FALSE}
+cbind(
+  z,
+  apply(z, 2, function(x) x/rowSums(z)) %>% round(digits = 3)
+) 
+```
+
+
+
+
+
+
+
+
+
+
+
+
