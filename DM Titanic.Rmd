@@ -1,6 +1,8 @@
 ---
-title: "Data Mining: Titanic, Survived vs others."
-output: html_notebook
+title: 'Data Mining: Titanic, Survived vs others.'
+output:
+  html_document: default
+  html_notebook: default
 ---
 ```{r, message=FALSE, warning=FALSE}
 library("caret");
