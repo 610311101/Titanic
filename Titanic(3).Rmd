@@ -1,0 +1,90 @@
+---
+title: "Data Mining: Titanic(3)"
+output: html_notebook
+---
+  從(2)中發現我們是要找Y跟X的關係，也就是Y|X，所以(2)的方向應該是有點不太對。
+```{r, message=FALSE, warning=FALSE, echo=FALSE}
+library("caret");
+library("ggplot2");
+library("magrittr");
+library("plot3D");
+library("dplyr");
+library("ggpubr");
+library("scales");
+setwd("C:/Users/hou/Desktop")
+Data <- read.csv("Titanic/train.csv",header = T);
+#kable(head(Data))
+```
+
+---
+  
+  **Pclass vs Survived**
+  
+  * **3**階層有76%的人死掉。
+* **1**階層只有37%的人死掉。
+```{r, echo=FALSE}
+##  Pclass vs Survived
+Data$Survived <- as.factor(Data$Survived);
+Data$Pclass   <- as.factor(Data$Pclass);
+Counts <- table(Data$Pclass, Data$Survived);
+Percent <- table(Data$Pclass, Data$Survived) %>% apply(1,function(x) x/sum(x) ) %>% t();
+Percent <- Percent %>% round(digits = 2);
+g1 <- ggplot(Data, aes(x = Pclass, fill = Survived)) +
+  geom_bar(stat = "count", width = 0.5, position = "fill") + 
+  ylab("") +
+  xlab("") +
+  annotate("text", x=3, y=0.8, label=  Percent[3,1]) + 
+  annotate("text", x=2, y=0.8, label=  Percent[2,1]) + 
+  annotate("text", x=1, y=0.8, label=  Percent[1,1])
+##  Sex vs Survived
+Data$Survived <- as.factor(Data$Survived);
+Data$Sex   <- as.factor(Data$Sex);
+Counts <- table(Data$Sex, Data$Survived);
+Percent <- table(Data$Sex, Data$Survived) %>% apply(1,function(x) x/sum(x) ) %>% t();
+Percent <- Percent %>% round(digits = 2);
+g2 <- ggplot(Data, aes(x = Sex, fill = Survived)) +
+  geom_bar(stat = "count", width = 0.5, position = "fill") + 
+  ylab("") +
+  xlab("") +
+  annotate("text", x=1, y=0.9, label=  Percent[1,1]) + 
+  annotate("text", x=2, y=0.9, label=  Percent[2,1])  
+ggarrange(g1, g2,
+          labels = c("Pclass vs Survived", "Sex vs Survived"),
+          ncol = 2, nrow = 1);
+```
+**Sex vs Survived**
+  
+  * **女姓**只有26%的人死掉。
+* **男性**則有81%的人死掉。
+
+**Embarked vs Survived**
+  
+  * **C**港口上船的人有0.45%的人死掉。
+* **Q**港口上船的人有0.61%的人死掉。
+* **S**港口上船的人有0.66%的人死掉。
+
+```{r, echo=FALSE}
+##  Embarked vs Survived
+Data$Survived <- as.factor(Data$Survived);
+Data$Embarked   <- as.factor(Data$Embarked);
+Counts <- table(Data$Embarked, Data$Survived);
+Percent <- table(Data$Embarked, Data$Survived) %>% apply(1,function(x) x/sum(x) ) %>% t();
+Percent <- Percent %>% round(digits = 2);
+g3 <- ggplot(Data, aes(x = Embarked, fill = Survived)) +
+  geom_bar(stat = "count", width = 0.5, position = "fill") + 
+  ylab("") +
+  xlab("") +
+  annotate("text", x=2, y=0.9, label=  Percent[2,1]) + 
+  annotate("text", x=3, y=0.9, label=  Percent[3,1]) + 
+  annotate("text", x=4, y=0.9, label=  Percent[4,1]) 
+g3  
+```
+
+---
+  
+#### 根據這筆資料簡單的summary：
+  
+  * **1階層**人數比**2階層**的人數來要多，但死亡的比率卻比較少。
+* 女生的人數少但死亡率不高。
+* **Q港**與**S港**死亡率是差不多的。
+* 這次分析是Y|X的角度(吧)。
