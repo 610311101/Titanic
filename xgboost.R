@@ -1,45 +1,28 @@
 library(xgboost);
 library(Matrix);
 library("dplyr");
-Titanic <- readRDS("Titanic.RDS");
+rm(list =ls())
+splitData <- readRDS("splitData.RDS");
 ## ----
-##  Dummy variable: Sex and Embarked.
-Sex      <- model.matrix(~Titanic$Data$Sex-1) %>% data.frame();
-colnames(Sex) <- c("female","male");
-Embarked <- model.matrix(~Titanic$Data$Embarked-1) %>% data.frame()
-colnames(Embarked) <- c("C","Q","S");
-feature <- data.frame(Sex,Embarked);
-Titanic$Data <- cbind(
-  Titanic$Data %>% select(PassengerId, Pclass,Age,SibSp, Parch, Fare , train),
-  feature
-);
-## ----
-##  Set train, label and test.
-train <- Titanic$Data %>% filter(train==T) %>%
-  select(-c(train,PassengerId)) %>% as.matrix;
-test  <- Titanic$Data %>% filter(train==F) %>%
-  select(-c(train,PassengerId)) %>% as.matrix();
-label <- Titanic$Label$Survived;
-## ----
-##  Balance
-names(label) <- 1:length(label);
-index_1 <- names(label[label==1]) %>% as.numeric();
-rand_1  <- sample( index_1,sum(label==0) - length(index_1) )
+##  Balance train.
+train_1 <-  splitData$train %>% filter( Survived==1 );
+sample_train_1 <- train_1[ sample(1:nrow(train_1), 300, replace = T), ];
 train <- rbind(
-  train[rand_1, ],
-  train
-)
-label <- c( label,label[rand_1] )
-
+  splitData$train,
+  sample_train_1
+);
+train.label <- train$Survived;
+train.train <- train %>% select(Pclass, Age, SibSp, Parch, Fare, female, male, C, Q, S);
+check.label <- splitData$check$Survived;
+check.train <- splitData$check %>% select(Pclass, Age, SibSp, Parch, Fare, female, male, C, Q, S);
 ## ----
-##  xgboost learning
-fit <- xgboost(data = train, label = label, max_depth = 5,
-                 eta = 0.3, nthread = 2, nrounds = 200,objective = "binary:logistic");
-pred <- predict(fit, test);
-Survived <- 1*(pred > 0.5);
-submission <- read.csv("gender_submission.csv")
-submission$Survived <- Survived;
-write.csv(submission,"Mysubmission.csv",row.names = F)
+##  xgboost
+fit <- xgboost(data = as.matrix(train.train), label = train.label, max_depth = 10,
+               eta = 0.1, nthread = 2, nrounds = 20,objective = "binary:logistic");
+pred <- predict(fit, as.matrix(check.train));
+check.Survived <- 1*(pred > 0.5);
+table(check.Survived,check.label);
 ## ----
 ##  variable importance
-importance <- xgb.importance(feature_names = colnames(train), model = fit)
+importance <- xgb.importance(feature_names = colnames(train.train), model = fit)
+importance
