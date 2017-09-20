@@ -1,6 +1,5 @@
 setwd("C:/Users/Hou/Desktop");
 library("caret");
-library("")
 rm(list = ls());
 ##
 ##  This code we will remove missing data, and show how to fitting
