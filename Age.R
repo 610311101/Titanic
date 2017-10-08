@@ -1,10 +1,63 @@
 ## ----
-##  Age跟甚麼有關？
+##  Age
+## ----
+D[,"Age"][is.na(D[,"Age"])] <- median(na.omit(D[,"Age"]))  ##  補中位數
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+D <- D %>%  
+  mutate(
+    Age = 
+      if_else(
+        Age<17,"young",if_else(
+          Age>=17&&Age<40,"strong","old"
+        )
+      )
+  )
+
+
+D$Age %>% summary
+
+
+
 ggplot(
   D %>% na.omit,
   aes(
-    x = Age,
-    color = as.factor(Survived)
+    x = Age, color = as.factor(Pclass)
   )
 ) + geom_density()
 
@@ -13,25 +66,42 @@ ggplot(
 
 
 
+D %>% 
+  filter(is.na(Age),!is.na(Survived)) %>%  ##  遺失Age的train
+  select(Age,Survived,Sex,Fare,Pclass,Embarked,mr,mrs,miss) %>%  ##  可能相關變數
+  arrange(Sex,Pclass)
+
+
+D.female <- 
+  D %>% 
+  filter(is.na(Age),!is.na(Survived),Sex=="female",Pclass=="3") %>%
+  select(Survived,Embarked,Pclass,Fare,Parch,Cabin) 
+  
+D.female$Survived %>% table
 
 
 
 
+D %>% 
+  filter(is.na(Age),!is.na(Survived),Sex=="female") %>%  ##  遺失Age的train
+  ggplot(
+    aes(x = as.factor(Survived), fill = Sex)
+  ) + geom_bar()
 
 
 
 
+D  %>% filter(Embarked=="Q") %>% select(Age)
 
 
 
-
-
-
-
-
-
-
-
+ggplot(
+  D  ,
+  aes(
+    x = Age,
+    color = as.factor(Embarked)
+  )
+) + geom_density()
 
 
 
@@ -39,8 +109,7 @@ d <- na.omit(D)
 ggplot(
   d,
   aes(
-    x = Age, 
-    color = as.factor(Survived)
+    x = Age
   )
 ) + geom_density()  ##  小孩存活率高
 ## ----

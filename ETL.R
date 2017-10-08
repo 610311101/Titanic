@@ -47,14 +47,7 @@ D[,"Cabin"]  <- as.character(D[,"Cabin"])  ##  Cabin轉換成字串
 D[,"Cabin"]  <- gsub(" ","", D[,"Cabin"])  ##  除去空白
 D[D[,"Cabin"]=="","Cabin"] <- NA  ##  ""補上NA
 ## ----
-##  類別變數編碼
-Pclass           <- as.data.frame(model.matrix(~as.factor(D[,"Pclass"])-1))
-colnames(Pclass) <- paste0("Pclass.",c("1","2","3"))
-Embarked           <- as.data.frame(model.matrix(~D[,"Embarked"]-1))
-colnames(Embarked) <- paste0("Embarked.",c("C","Q","S"))
-D <- mutate(D,Sex = as.numeric(D[,"Sex"])-1)  ##  male:1
-## ----
-##  增加變數
+##  增加字串變數
 Name   <- select_Name(data = D, frequency = 50)
 Ticket           <- select_Ticket(data = D, stop = 1, frequency = 1)
 colnames(Ticket) <- paste0("Ticket.",colnames(Ticket))
@@ -62,12 +55,27 @@ Cabin           <- select_Cabin(data = D, stop = 1, frequency = 1)
 colnames(Cabin) <- paste0("Cabin.",colnames(Cabin))
 D <- cbind(
   D,
-  Pclass,
-  Embarked,
   Name,
   Ticket,
   Cabin
 )
+## ----
+##  類別變數編碼
+Pclass           <- as.data.frame(model.matrix(~as.factor(D[,"Pclass"])-1))
+colnames(Pclass) <- paste0("Pclass.",c("1","2","3"))
+Embarked           <- as.data.frame(model.matrix(~D[,"Embarked"]-1))
+colnames(Embarked) <- paste0("Embarked.",c("C","Q","S"))
+D <- mutate(D,Sex = as.numeric(D[,"Sex"])-1)  ##  male代表1
+## ----
+##  增加類別編碼變數
+D <- cbind(
+  D,
+  Pclass,
+  Embarked
+)
+## ----
+##  連續變數補遺失值
+D[,"Age"][is.na(D[,"Age"])] <- median(na.omit(D[,"Age"]))  ##  Age補中位數
 ## ----
 ##  除去舊的變數
 D <- D %>% select(-Name,-Ticket,-Cabin,-Pclass,-Embarked)
