@@ -1,0 +1,82 @@
+select_Name <- function(data, frequency){
+  
+  Name.tdm <- 
+    Corpus(VectorSource(data[,"Name"])) %>% ##  Name建立書冊
+    TermDocumentMatrix(
+      control = list(
+        wordLengths = c(1,Inf)  ##  單字長度範圍
+      )
+    )
+  highfreq <- names(
+    row_sums(Name.tdm)[
+      row_sums(Name.tdm)>frequency
+      ]
+  )
+  Name.tdm <- as.matrix(Name.tdm)
+  Name.tdm <- Name.tdm[rownames(Name.tdm) %in% highfreq,]
+  Name.data.frame <- as.data.frame(t(Name.tdm))
+  return(Name.data.frame)
+}
+#  select_Name(d,80)
+
+select_Ticket <- function(data, stop = 1, frequency){
+  Ticket <- substr(data[,"Ticket"],start = 1,stop = stop);
+  Ticket.tdm <- 
+    Corpus(VectorSource(Ticket)) %>% ##  Ticket建立書冊
+    TermDocumentMatrix(
+      control = list(
+        wordLengths = c(1,Inf)  ##  單字長度範圍
+      )
+    )
+  highfreq <- names(
+    row_sums(Ticket.tdm)[
+      row_sums(Ticket.tdm)>frequency
+      ]
+  )
+  Ticket.tdm <- as.matrix(Ticket.tdm)
+  Ticket.tdm <- Ticket.tdm[rownames(Ticket.tdm) %in% highfreq,]
+  Ticket.data.frame <- as.data.frame(t(Ticket.tdm))
+  return(Ticket.data.frame)
+}
+
+
+select_Cabin <- function(data, stop = 1, frequency){
+  Cabin <- substr(data[,"Cabin"],start = 1,stop = stop);
+  Cabin.tdm <- 
+    Corpus(VectorSource(Cabin)) %>% ##  Cabin建立書冊
+    TermDocumentMatrix(
+      control = list(
+        wordLengths = c(1,Inf)  ##  單字長度範圍
+      )
+    )
+  highfreq <- names(
+    row_sums(Cabin.tdm)[
+      row_sums(Cabin.tdm)>frequency
+      ]
+  )
+  Cabin.tdm <- as.matrix(Cabin.tdm)
+  Cabin.tdm <- Cabin.tdm[rownames(Cabin.tdm) %in% highfreq,]
+  Cabin.data.frame <- as.data.frame(t(Cabin.tdm))
+  return(Cabin.data.frame)
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
