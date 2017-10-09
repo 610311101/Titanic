@@ -79,6 +79,8 @@ D[,"Age"][is.na(D[,"Age"])] <- median(na.omit(D[,"Age"]))  ##  Age補中位數
 ## ----
 ##  除去舊的變數
 D <- D %>% select(-Name,-Ticket,-Cabin,-Pclass,-Embarked)
+## ----
+D <- mutate(D, Survived = as.factor(Survived))  ##  Survived宣告類別變數
 glimpse(D)
 rm( list = ls()[ls()!="D"] )
 
