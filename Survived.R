@@ -10,10 +10,10 @@ library('tibble')
 library("ggplot2")
 library("tm")
 library("slam")
+source("function.R")
 ## ----
 ##  資料概況
 setwd("C:/Users/Hou/Desktop/Titanic/data");
-source("function.R")
 D <- merge(
   read.csv("train.csv"), ##  train data
   read.csv("test.csv"), ##  test data
@@ -47,11 +47,14 @@ D[,"Cabin"]  <- as.character(D[,"Cabin"])  ##  Cabin轉換成字串
 D[,"Cabin"]  <- gsub(" ","", D[,"Cabin"])  ##  除去空白
 D[D[,"Cabin"]=="","Cabin"] <- NA  ##  ""補上NA
 ## ----
+##  連續變數補遺失值
+D[,"Age"][is.na(D[,"Age"])] <- median(na.omit(D[,"Age"]))  ##  Age補中位數
+## ----
 ##  增加字串變數
-Name   <- select_Name(data = D, frequency = 40)
-Ticket           <- select_Ticket(data = D, stop = 1, frequency = 40)
+Name   <- select_Name(data = D, frequency = 50)
+Ticket           <- select_Ticket(data = D, stop = 1, frequency = 200)
 colnames(Ticket) <- paste0("Ticket.",colnames(Ticket))
-Cabin           <- select_Cabin(data = D, stop = 1, frequency = 40)
+Cabin           <- select_Cabin(data = D, stop = 1, frequency = 10)
 colnames(Cabin) <- paste0("Cabin.",colnames(Cabin))
 D <- cbind(
   D,
@@ -74,32 +77,19 @@ D <- cbind(
   Embarked
 )
 ## ----
-##  連續變數補遺失值
-D[,"Age"][is.na(D[,"Age"])] <- median(na.omit(D[,"Age"]))  ##  Age補中位數
-## ----
 ##  除去舊的變數
 D <- D %>% select(-Name,-Ticket,-Cabin,-Pclass,-Embarked)
 ## ----
-D <- mutate(D, Survived = as.factor(Survived))  ##  Survived宣告類別變數
-D <- 
-  cbind(
-    D %>% select(Survived,PassengerId),
-    D %>% select(-Survived,-PassengerId) %>% scale()
-  )
-rm(list = ls()[ls()!="D"])
-
-
-
-
-
-
-
-
-
-
-
-
-
+##  甚麼人一定會活著？
+table(D$Survived,D$SibSp)  ##  SibSp>5的都死了
+table(D$Survived,D$Parch)  ##  Parch>6的都死了
+d <- filter(D,Age<16)  ##  Age<16的情況下
+table(Survived = d$Survived, Pclass.1 = d$Pclass.1)  ##  Pclass.1的幾乎都活
+table(Survived = d$Survived, Pclass.2 = d$Pclass.2)  ##  Pclass.2的都活
+d <- filter(D,Fare>75)  ##  Fare>75的情況下
+table(Survived = d$Survived, Sex = d$Sex)  ##  女性幾乎都活
+d <- filter(D,Ticket.1==1)   ##  在Ticket.1的條件下
+table(Survived = d$Survived, miss = d$miss)  ##  miss幾乎都活
 
 
 

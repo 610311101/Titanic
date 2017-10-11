@@ -27,7 +27,7 @@ for( i in 1:length(levels(train[,"Survived"])) ){
     i.train <- i.train[-c(1:sample.size.each),] 
   }
 }
-rm( list = ls()[ls()!="train.train"] )
+rm( list = setdiff(ls(),c("D","train.train")) )
 
 
 

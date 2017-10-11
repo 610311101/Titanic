@@ -61,9 +61,29 @@ select_Cabin <- function(data, stop = 1, frequency){
 }
 
 
-
-
-
+variable.dot <- function(data, main, ignore){
+  data.ignore <- select(data,ignore)
+  data.main   <- select(data,main)
+  data <- 
+    select(
+      data,
+      setdiff(colnames(data),c(main,ignore))
+    )
+  for( i in 1:ncol(data) ){
+    v <- data.main * data[,i]
+      if( i == 1 ) V <- v
+      if( i != 1 ) V <- cbind(V,v)
+  }
+  colnames(V) <- paste0(main,".V",seq(ncol(V)))
+  data.return <- 
+    cbind(
+      data.ignore,
+      data.main,
+      data,
+      V
+    )
+  return(data.return)
+}
 
 
 

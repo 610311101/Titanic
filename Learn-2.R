@@ -1,20 +1,21 @@
-## ----
-library("randomForest")
+library("e1071")
 ## ----
 ##  fit
-rf.fit <- 
-  randomForest(
+svm.fit <- 
+  svm(
     Survived~.,
     train.train$train.train %>% select(-PassengerId),
-    ntree = 1200,
-    classwt = c(0.5,0.5),
-    maxnodes = 2
+    probability = T,
+    kernel ="radial"
   )
-rf.fit
+train.predict.table <- table(predict = svm.fit$fitted, real = train.train$train.train$Survived)
+train.predict.table
+train.predict.auccury <- sum(diag(train.predict.table))/sum(train.predict.table)
+train.predict.auccury
 ## ----
 ##  valid.1
 v1 <- predict(
-  rf.fit,
+  svm.fit,
   train.train$train.valid.1 %>% select(-PassengerId,-Survived)
 )
 v1.predict.table   <- table(predict = v1, real = train.train$train.valid.1$Survived)
@@ -24,7 +25,7 @@ v1.predict.auccury
 ## ----
 ##  valid.2
 v2 <- predict(
-  rf.fit,
+  svm.fit,
   train.train$train.valid.2 %>% select(-PassengerId,-Survived)
 )
 v2.predict.table   <- table(predict = v2, real = train.train$train.valid.2$Survived)
@@ -34,7 +35,7 @@ v2.predict.auccury
 ## ----
 ##  valid.3
 v3 <- predict(
-  rf.fit,
+  svm.fit,
   train.train$train.valid.3 %>% select(-PassengerId,-Survived)
 )
 v3.predict.table   <- table(predict = v3, real = train.train$train.valid.3$Survived)
@@ -44,6 +45,8 @@ v3.predict.auccury
 ## ----
 ##  變數影響力
 ##  rf.fit$importance 
+
+
 
 
 
