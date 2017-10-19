@@ -1,21 +1,18 @@
-select_Name <- function(data, frequency){
-  
-  Name.tdm <- 
-    Corpus(VectorSource(data[,"Name"])) %>% ##  Name建立書冊
+name <- function(x){
+  require(tm)
+  x <- gsub("[[:punct:]]","",x)
+  x <- tolower(x)
+  strsplit(x," ")
+  tdm <- 
+    VCorpus(VectorSource(x)) %>% ##  Name建立書冊
     TermDocumentMatrix(
       control = list(
+        removePunctuation = TRUE,
         wordLengths = c(1,Inf)  ##  單字長度範圍
       )
     )
-  highfreq <- names(
-    row_sums(Name.tdm)[
-      row_sums(Name.tdm)>frequency
-      ]
-  )
-  Name.tdm <- as.matrix(Name.tdm)
-  Name.tdm <- Name.tdm[rownames(Name.tdm) %in% highfreq,]
-  Name.data.frame <- as.data.frame(t(Name.tdm))
-  return(Name.data.frame)
+  tdm <- as.matrix(tdm)
+  return(t(tdm))
 }
 #  select_Name(d,80)
 

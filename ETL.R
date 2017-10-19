@@ -1,111 +1,97 @@
-setwd("C:/Users/Hou/Desktop/Titanic")
+setwd("C:/Users/Hou/Desktop")
 rm(list = ls())
+library(data.table)
+library(tm)
+library(dplyr)
+library(caret)
+library(doSNOW)
+library(Matrix)
+library(MLmetrics)
+library(slam)
 ## ----
-##  package
-library('dplyr')
-library('data.table')
-library('stringr')
-library("knitr")
-library('tibble')
-library("ggplot2")
-library("tm")
-library("slam")
+##  Load train + test
+train <- fread("Titanic/data/train.csv",stringsAsFactors = F);
+test <- fread("Titanic/data/test.csv",stringsAsFactors = F);
+Data <- merge(train, test, all=T)
+rm(list = c("train","test"))
+
 ## ----
-##  資料概況
-setwd("C:/Users/Hou/Desktop/Titanic/data");
-source("function.R")
-D <- merge(
-  read.csv("train.csv"), ##  train data
-  read.csv("test.csv"), ##  test data
-  all = T
-)
-##  12個變數：
-##  "PassengerId" "Pclass" "Name" "Sex" "Age" "SibSp"
-##  "Parch" "Ticket" "Fare" "Cabin" "Embarked" "Survived"
-sum(is.na(D[,"Age"]))  ##  Age有263個missing
-filter(D, !is.na(Survived), is.na(Age)) %>% nrow  ##  train有177個
-filter(D,  is.na(Survived), is.na(Age)) %>% nrow  ##  test有86個
-sum(is.na(D[,"Fare"]))  ##  Fare有1個missing
-filter(D, is.na(Survived), is.na(Fare)) %>% nrow  ##  test有1個
-table(D[,"Embarked"])  ##  Embarked有2個""
-D[D[,"Embarked"]=="",][,"Survived"]  ##  其中train有2個""
-D[D[,"Cabin"]=="",] %>% nrow  ##  Cabin有1014個""
-table(D[,"Survived"])  ##  0:549 1:342
-table(D[,"Survived"])[1]/sum(table(D[,"Survived"]))  ##  0的比例0.61
+##  Clean
+Data$Embarked[Data$Embarked==""] <- "S";
+Data$MissingAge <- ifelse(is.na(Data$Age),"Y","N");
+Data$FamilySize <- Data$SibSp + Data$Parch + 1;
+Data$EmptyCabin <- ifelse(Data$Cabin=="","Y","N");
+
 ## ----
-##  清洗變數
-D[,"Embarked"] <- as.character(D[,"Embarked"])  ##  Embarked轉換成字串
-D[D[,"Embarked"] == "","Embarked"] <- "S"  ##  Embarked有2個"" => 補S
-D[,"Fare"][is.na(D[,"Fare"])] <- 7.398617  ##  Fare有2個missing => 補7.398617
-D <- mutate(D,Embarked = as.factor(Embarked))  ##  重新定義factor
-D[,"Ticket"]  <- as.character(D[,"Ticket"])  ##  Ticket轉換成字串
-D[,"Ticket"]  <- gsub("[[:punct:] ]","",D[,"Ticket"])  ##  除去多餘的符號
-D[,"Name"] <- as.character(D[,"Name"])  ##  Name轉換成字串
-D[,"Name"]  <- gsub("[[:punct:]]","",D[,"Name"])  ##  除去多餘的符號
-D[,"Name"]  <- gsub("(\\w)","\\L\\1",D[,"Name"],perl=TRUE)  ##  改成小寫英文
-D[,"Cabin"]  <- as.character(D[,"Cabin"])  ##  Cabin轉換成字串
-D[,"Cabin"]  <- gsub(" ","", D[,"Cabin"])  ##  除去空白
-D[D[,"Cabin"]=="","Cabin"] <- NA  ##  ""補上NA
+##  Title
+Name       <- strsplit(Data$Name,"[,.]")
+Title      <- sapply(Name, function(x) gsub(" ","",x[2])) 
+TitleType  <- names(table(Title))
+Data$Title <- Title;
+
 ## ----
-##  增加字串變數
-Name   <- select_Name(data = D, frequency = 40)
-Ticket           <- select_Ticket(data = D, stop = 1, frequency = 40)
-colnames(Ticket) <- paste0("Ticket.",colnames(Ticket))
-Cabin           <- select_Cabin(data = D, stop = 1, frequency = 40)
-colnames(Cabin) <- paste0("Cabin.",colnames(Cabin))
-D <- cbind(
-  D,
-  Name,
-  Ticket,
-  Cabin
-)
-## ----
-##  類別變數編碼
-Pclass           <- as.data.frame(model.matrix(~as.factor(D[,"Pclass"])-1))
-colnames(Pclass) <- paste0("Pclass.",c("1","2","3"))
-Embarked           <- as.data.frame(model.matrix(~D[,"Embarked"]-1))
-colnames(Embarked) <- paste0("Embarked.",c("C","Q","S"))
-D <- mutate(D,Sex = as.numeric(D[,"Sex"])-1)  ##  male代表1
-## ----
-##  增加類別編碼變數
-D <- cbind(
-  D,
-  Pclass,
-  Embarked
-)
-## ----
-##  連續變數補遺失值
-D[,"Age"][is.na(D[,"Age"])] <- median(na.omit(D[,"Age"]))  ##  Age補中位數
-## ----
-##  除去舊的變數
-D <- D %>% select(-Name,-Ticket,-Cabin,-Pclass,-Embarked)
-## ----
-D <- mutate(D, Survived = as.factor(Survived))  ##  Survived宣告類別變數
-D <- 
-  cbind(
-    D %>% select(Survived,PassengerId),
-    D %>% select(-Survived,-PassengerId) %>% scale()
+##  Ticket
+Ticket <- gsub("[[:punct:] ]","",Data$Ticket)
+TicketType    <- gsub("[0-9]","",Ticket)
+Data$TicketType <- 
+  ifelse(
+    TicketType%in%c("FC","PC","WEP"),
+    "1",
+    ifelse(
+      TicketType%in%c("CASOTON","FCC","PPP","SC","SCAH","SCAHBasle","SCOW","SCParis","SOC","SOP","SWPP"),
+      "2",
+      ifelse(
+        TicketType%in%c("Fa","LINE","LP","PP","SOTONO","SOTONOQ","SP","STONO","STONOQ"),
+        "3",
+        "unknown"
+      )
+    )
   )
-rm(list = ls()[ls()!="D"])
 
+## ----
+##  Cabin
+Cabin <- gsub("[[:punct:] ]","",Data$Cabin)
+CabinType    <- gsub("[0-9]","",Cabin)
+Data$CabinType <- 
+  ifelse(
+    CabinType %in% c("A","B","BB","BBB","BBBB","C","CC","CCC","DD","E","T"),
+    "1",
+    "0"
+  )
 
+## ----
+##  All in Data
 
+## ----
+##  Feature and select
+feature <- c("Survived","Pclass","Sex","Age","SibSp","Parch","Fare","Embarked","MissingAge","FamilySize","EmptyCabin","Title","TicketType","CabinType")
+Data <- as.data.frame(Data)[,feature]
+Data <- mutate(
+  Data,
+  Pclass = as.factor(Pclass),
+  Sex    = as.factor(Sex),
+  Embarked = as.factor(Embarked),
+  Survived = as.factor(Survived),
+  MissingAge = as.factor(MissingAge),
+  EmptyCabin = as.factor(EmptyCabin),
+  Title = as.factor(Title),
+  TicketType = as.factor(TicketType),
+  CabinType = as.factor(CabinType)
+)
+rm(list = ls()[!ls()%in%c("Data")])
+str(Data, strict.width = "cut")
+colnames(Data)
 
+## ----
+##  Handle missing
+##  Dummy factor variable without target
+dummy      <- dummyVars(~.,  data = select(Data,-Survived))
+dummy.Data <- predict(dummy, select(Data,-Survived))
+preprocess      <- preProcess(dummy.Data, method = "bagImpute")
+bagImpute.Data  <- predict(preprocess, dummy.Data)
+bagImpute.Data  <- as.data.frame(bagImpute.Data)
+Data <- cbind("Survived" = Data$Survived,bagImpute.Data) 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+str(Data, strict.width = "cut")
+rm(list = ls()[ls()!="Data"])
 
